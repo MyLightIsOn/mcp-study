@@ -1,6 +1,6 @@
 # Task Manager MCP Server
 
-A Model Context Protocol (MCP) server for managing tasks with JSON persistence.
+A Model Context Protocol (MCP) server for managing tasks with JSON persistence and a real-time Vue.js UI.
 
 ## Features
 
@@ -10,134 +10,121 @@ A Model Context Protocol (MCP) server for managing tasks with JSON persistence.
 - ✅ Mark tasks as completed
 - ✅ Delete tasks
 - ✅ JSON file persistence (stored in `data/tasks.json`)
+- ✅ Real-time Vue.js UI that syncs with MCP changes
+- ✅ Live updates using Server-Sent Events (SSE)
 
-## Installation
+## Project Structure
+
+```
+mcp-study/
+├── src/
+│   ├── index.ts         # MCP server
+│   ├── storage.ts       # JSON persistence
+│   ├── api-server.ts    # REST API + SSE for UI
+│   └── types.ts         # TypeScript types
+├── ui/                  # Vue.js frontend
+│   └── src/
+│       └── components/
+│           └── TaskList.vue
+├── data/                # Task storage
+│   └── tasks.json
+└── README.md
+```
+
+## Quick Start
+
+### 1. Install Dependencies
 
 ```bash
 npm install
+cd ui && npm install && cd ..
 ```
 
-## Usage
-
-### Development Mode
-
-```bash
-npm run dev
-```
-
-### Production Build
+### 2. Build the MCP Server
 
 ```bash
 npm run build
-npm start
 ```
 
-## Available Tools
+### 3. Configure Claude Desktop
 
-### 1. `add_task`
-Add a new task to the task list.
-
-**Parameters:**
-- `title` (string, required): The title of the task
-- `description` (string, optional): Additional details about the task
-
-**Example:**
-```
-Add a task to buy groceries
-```
-
-### 2. `list_tasks`
-List all tasks, optionally filtered by completion status.
-
-**Parameters:**
-- `completed` (boolean, optional): Filter by completion status
-  - `true`: Show only completed tasks
-  - `false`: Show only incomplete tasks
-  - Omit: Show all tasks
-
-**Example:**
-```
-Show me all my incomplete tasks
-```
-
-### 3. `update_task`
-Update an existing task's details.
-
-**Parameters:**
-- `id` (string, required): The task ID
-- `title` (string, optional): New title
-- `description` (string, optional): New description
-- `completed` (boolean, optional): New completion status
-
-**Example:**
-```
-Update task abc-123 to change the title to "Buy organic groceries"
-```
-
-### 4. `complete_task`
-Mark a task as completed.
-
-**Parameters:**
-- `id` (string, required): The task ID
-
-**Example:**
-```
-Mark task abc-123 as completed
-```
-
-### 5. `delete_task`
-Delete a task permanently.
-
-**Parameters:**
-- `id` (string, required): The task ID
-
-**Example:**
-```
-Delete task abc-123
-```
-
-## Configuration for Claude Desktop
-
-To use this MCP server with Claude Desktop, add the following to your Claude Desktop configuration:
+Add to your `claude_desktop_config.json`:
 
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "task-manager": {
-      "command": "node",
+      "command": "/Users/YOUR_USERNAME/.nvm/versions/node/v25.2.1/bin/node",
       "args": ["/absolute/path/to/mcp-study/dist/index.js"]
     }
   }
 }
 ```
 
-Replace `/absolute/path/to/mcp-study` with the actual path to this project.
+Replace the paths with your actual paths. Restart Claude Desktop.
 
-## Data Storage
+### 4. Start the Demo UI
 
-Tasks are stored in `data/tasks.json` in the following format:
-
-```json
-{
-  "tasks": [
-    {
-      "id": "uuid-here",
-      "title": "Buy groceries",
-      "description": "Milk, eggs, bread",
-      "completed": false,
-      "createdAt": "2024-01-01T12:00:00.000Z",
-      "updatedAt": "2024-01-01T12:00:00.000Z"
-    }
-  ]
-}
+```bash
+./start-demo.sh
 ```
 
-## Next Steps
+This starts:
+- API server on `http://localhost:3001`
+- Vue UI on `http://localhost:5173`
 
-After building the MCP server, you can:
-1. Test it with the MCP Inspector
-2. Configure it in Claude Desktop
-3. Build a UI to visualize and manage tasks in real-time
+## Usage
+
+### Through Claude (MCP)
+
+Talk to Claude in Claude Desktop:
+
+- **Add a task**: "Add a task to buy groceries"
+- **List tasks**: "Show me all my tasks"
+- **Update task**: "Update task [id] and change the title"
+- **Complete task**: "Mark task [id] as completed"
+- **Delete task**: "Delete task [id]"
+
+### Through the UI
+
+1. Open `http://localhost:5173` in your browser
+2. Watch tasks appear in real-time as you add them through Claude
+3. See live updates when tasks are completed or modified
+
+## The Magic ✨
+
+This demo showcases the power of MCPs:
+
+1. **Conversational Interface**: Manage tasks through natural language with Claude
+2. **Visual Interface**: See the same data in a beautiful UI
+3. **Real-Time Sync**: Changes from Claude appear instantly in the UI
+4. **Shared Data**: Both interfaces read/write to the same `tasks.json` file
+
+Try it:
+1. Ask Claude to "Add a task to learn about MCPs"
+2. Watch it appear in the UI instantly
+3. The UI updates in real-time via Server-Sent Events!
+
+## Development
+
+### Run MCP Server Only
+```bash
+npm run dev
+```
+
+### Run API Server Only
+```bash
+npm run api
+```
+
+### Run Vue UI Only
+```bash
+cd ui && npm run dev
+```
+
+### Build for Production
+```bash
+npm run build
+```
