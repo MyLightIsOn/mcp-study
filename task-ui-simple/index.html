@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - MCP Demo</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #app {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        .task-list {
+            margin-top: 20px;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .task-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+            background: #f8f9fa;
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .task-description {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+            font-size: 0.8em;
+            color: #adb5bd;
+        }
+
+        .delete-btn {
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .refresh-info {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .refresh-info strong {
+            color: #667eea;
+        }
+
+        .error-state {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>📋 Task Manager</h1>
+            <p>MCP Server Demo - Real-time Task Viewer</p>
+        </div>
+
+        <div class="card">
+            <div class="refresh-info">
+                <strong>🔄 Auto-refresh:</strong> This page automatically checks for new tasks every 2 seconds.
+                Try adding tasks through Claude and watch them appear here!
+            </div>
+
+            <div v-if="error" class="error-state">
+                <strong>⚠️ Error:</strong> {{ error }}
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.total }}</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.active }}</div>
+                    <div class="stat-label">Active</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.completed }}</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+            </div>
+
+            <div v-if="loading" class="loading">
+                <div class="spinner"></div>
+                <div>Loading tasks...</div>
+            </div>
+
+            <div v-else-if="tasks.length === 0" class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                </svg>
+                <h3>No tasks yet</h3>
+                <p>Ask Claude to create a task for you!</p>
+            </div>
+
+            <div v-else class="task-list">
+                <div v-for="task in tasks" :key="task.id" :class="['task-item', { completed: task.completed }]">
+                    <input
+                        type="checkbox"
+                        class="task-checkbox"
+                        :checked="task.completed"
+                        @change="toggleTask(task)"
+                    >
+                    <div class="task-content">
+                        <div class="task-title">{{ task.title }}</div>
+                        <div v-if="task.description" class="task-description">{{ task.description }}</div>
+                        <div class="task-meta">
+                            <span>Created: {{ formatDate(task.createdAt) }}</span>
+                            <span v-if="task.updatedAt !== task.createdAt">Updated: {{ formatDate(task.updatedAt) }}</span>
+                        </div>
+                    </div>
+                    <button class="delete-btn" @click="deleteTask(task)">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    tasks: [],
+                    loading: true,
+                    error: null,
+                    refreshInterval: null
+                }
+            },
+            computed: {
+                stats() {
+                    return {
+                        total: this.tasks.length,
+                        active: this.tasks.filter(t => !t.completed).length,
+                        completed: this.tasks.filter(t => t.completed).length
+                    };
+                }
+            },
+            methods: {
+                async loadTasks() {
+                    try {
+                        // Add timestamp to prevent caching
+                        const response = await fetch(`http://localhost:3000/tasks.json?t=${Date.now()}`);
+                        if (!response.ok) throw new Error('Failed to load tasks');
+                        const data = await response.json();
+                        this.tasks = data.tasks || [];
+                        this.error = null;
+                    } catch (err) {
+                        this.error = err.message;
+                        console.error('Error loading tasks:', err);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                formatDate(dateString) {
+                    const date = new Date(dateString);
+                    return date.toLocaleString();
+                },
+                async toggleTask(task) {
+                    // In a real app, you'd call the MCP server API here
+                    // For now, we'll just update locally and reload
+                    task.completed = !task.completed;
+                    alert('Task completion toggled! (Note: This is a read-only demo. Use Claude to actually update tasks.)');
+                    await this.loadTasks();
+                },
+                async deleteTask(task) {
+                    // In a real app, you'd call the MCP server API here
+                    alert(`Delete "${task.title}"? (Note: This is a read-only demo. Use Claude to actually delete tasks.)`);
+                }
+            },
+            mounted() {
+                this.loadTasks();
+                // Auto-refresh every 2 seconds to show real-time updates
+                this.refreshInterval = setInterval(() => {
+                    this.loadTasks();
+                }, 2000);
+            },
+            beforeUnmount() {
+                if (this.refreshInterval) {
+                    clearInterval(this.refreshInterval);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
